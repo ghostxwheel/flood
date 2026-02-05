@@ -45,6 +45,7 @@ const config = {
   ssl: false,
   sslKey: path.resolve(path.join(temporaryRuntimeDirectory, 'key.pem')),
   sslCert: path.resolve(path.join(temporaryRuntimeDirectory, 'fullchain.pem')),
+  sslCa: path.resolve(path.join(temporaryRuntimeDirectory, 'cacerts.pem')),
   allowedPaths: [temporaryRuntimeDirectory],
   serveAssets: false,
   disableRateLimit: false,

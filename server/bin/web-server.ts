@@ -10,6 +10,9 @@ import packageJSON from '../../package.json';
 import constructRoutes from '../routes';
 import {createLogger} from '../util/logger';
 
+import axios from 'axios';
+import https from 'https';
+
 const startWebServer = async () => {
   const {ssl = false, floodServerHost: host, floodServerPort: port} = config;
   const serverLogger = createLogger('web-server');
@@ -37,6 +40,10 @@ const startWebServer = async () => {
       trustProxy: 'loopback',
       loggerInstance: serverLogger,
     });
+  }
+
+  if (config.sslCa) {
+    axios.defaults.httpsAgent = new https.Agent({ca: fs.readFileSync(config.sslCa)});
   }
 
   await constructRoutes(instance);
