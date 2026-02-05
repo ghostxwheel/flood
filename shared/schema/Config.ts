@@ -112,6 +112,10 @@ export const configSchema = strictObject({
   // Path to the SSL fullchain certificate. [default: '<rundir>/fullchain.pem']
   sslCert: string().optional(),
 
+  // CLI argument: --sslca
+  // Path to custom CA certificate bundle. [default: '<rundir>/cacerts.pem']
+  sslCa: string().optional(),
+
   // Assign desired mounts to include. Refer to "Mounted on" column of `df -P`
   // "undefined" means all possible mounts. [default: undefined]
   watchMountPoints: array(string()).optional(),

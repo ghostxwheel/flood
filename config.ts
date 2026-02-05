@@ -147,6 +147,12 @@ const {argv: argvObj} = yargs(process.argv.slice(2))
     hidden: true,
     type: 'string',
   })
+  .option('sslca', {
+    describe: 'Bundle of custom CA certificates, for request agains self-signed certificates',
+    implies: 'ssl',
+    hidden: true,
+    type: 'string',
+  })
   .option('allowedpath', {
     describe: 'Allowed path for file operations, can be called multiple times',
     type: 'string',
@@ -345,6 +351,7 @@ const result = configSchema.safeParse({
   ssl: argv.ssl,
   sslKey: argv.sslkey || path.resolve(path.join(argv.rundir, 'key.pem')),
   sslCert: argv.sslcert || path.resolve(path.join(argv.rundir, 'fullchain.pem')),
+  sslCa: argv.sslca || path.resolve(path.join(argv.rundir, 'cacerts.pem')),
   allowedPaths: allowedPaths.length > 0 ? allowedPaths : undefined,
   serveAssets: argv.assets,
   disableRateLimit: argv.disableRateLimit,
