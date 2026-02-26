@@ -1,20 +1,23 @@
 import type {FastifyInstance, FastifyReply, FastifyRequest} from 'fastify';
 import {ZodTypeProvider} from 'fastify-type-provider-zod';
-import {strictObject, string} from 'zod';
+import {strictObject, string, z} from 'zod';
 
 import config from '../../../config';
-import type {
-  AuthAuthenticationResponse,
-  AuthRegistrationOptions,
-  AuthVerificationResponse,
-} from '../../../shared/schema/api/auth';
 import {
-  authAuthenticationSchema,
+  authAuthenticationRequestSchema,
+  authAuthenticationRequiredSchema,
+  type AuthAuthenticationResponse,
+  authAuthenticationResponseSchema,
+  authRegistrationResponseSchema,
   authRegistrationSchema,
   authUpdateUserSchema,
-  AuthVerificationPreloadConfigs,
+  type AuthVerificationPreloadConfigs,
+  authVerificationPreloadConfigsSchema,
+  type AuthVerificationResponse,
+  authVerificationResponseSchema,
 } from '../../../shared/schema/api/auth';
 import {type Credentials, credentialsSchema} from '../../../shared/schema/Auth';
+import {AccessLevel} from '../../../shared/schema/constants/Auth';
 import {NotFoundError} from '../../errors';
 import {authenticateHook, authenticateRequest} from '../../middleware/authenticate';
 import requireAdmin from '../../middleware/requireAdmin';
@@ -63,15 +66,42 @@ const authRoutes = async (fastify: FastifyInstance) => {
     '/authenticate',
     {
       schema: {
-        body: authAuthenticationSchema,
+        summary: 'Authenticate user',
+        description: 'Authenticate a user and set auth cookie.',
+        tags: ['Auth'],
+        body: authAuthenticationRequestSchema,
+        response: {
+          200: authAuthenticationResponseSchema,
+          400: z
+            .object({
+              message: z.string(),
+            })
+            .strict(),
+          401: z
+            .object({
+              message: z.string(),
+            })
+            .strict(),
+        },
       },
       ...(authRateLimitOptions ?? {}),
     },
-    async ({body: credentials}, reply): Promise<void> => {
+    async (req, reply): Promise<void> => {
       if (config.authMethod === 'none') {
         sendAuthenticationResponse(reply, Users.getConfigUser());
         return;
       }
+
+      const parsedCredentials = authAuthenticationRequiredSchema.safeParse(req.body);
+
+      if (!parsedCredentials.success) {
+        reply.status(400).send({
+          message: 'Missing username or password.',
+        });
+        return;
+      }
+
+      const credentials = parsedCredentials.data;
 
       try {
         const level = await Users.comparePassword(credentials);
@@ -99,20 +129,24 @@ const authRoutes = async (fastify: FastifyInstance) => {
     });
   };
 
-  typedFastify.post<{
-    Body: AuthRegistrationOptions;
-    Querystring: {cookie?: string};
-  }>(
+  typedFastify.post(
     '/register',
     {
       ...(authRateLimitOptions ?? {}),
       preHandler: ensureRegistrationPermission,
       schema: {
+        summary: 'Register user',
+        description: 'Register a new user. Optionally skip setting auth cookie.',
+        tags: ['Auth'],
         body: authRegistrationSchema,
         querystring: registrationQuerySchema,
+        response: {
+          200: z.union([authRegistrationResponseSchema, authAuthenticationResponseSchema]),
+          404: z.string(),
+        },
       },
     },
-    async (req, reply): Promise<void> => {
+    async (req, reply) => {
       if (config.authMethod === 'none') {
         reply.status(404).send('Not found');
         return;
@@ -124,8 +158,7 @@ const authRoutes = async (fastify: FastifyInstance) => {
       bootstrapServicesForUser(user);
 
       if (req.query.cookie === 'false') {
-        reply.status(200).send({username: user.username});
-        return;
+        return {username: user.username};
       }
 
       sendAuthenticationResponse(reply, credentials);
@@ -136,6 +169,19 @@ const authRoutes = async (fastify: FastifyInstance) => {
     '/verify',
     {
       ...(authRateLimitOptions ?? {}),
+      schema: {
+        summary: 'Verify authentication',
+        description: 'Check authentication state and preload configs.',
+        tags: ['Auth'],
+        response: {
+          200: authVerificationResponseSchema,
+          401: z
+            .object({
+              configs: authVerificationPreloadConfigsSchema,
+            })
+            .strict(),
+        },
+      },
     },
     async (req, reply): Promise<void> => {
       if (config.authMethod === 'none') {
@@ -194,6 +240,15 @@ const authRoutes = async (fastify: FastifyInstance) => {
       '/logout',
       {
         ...(authRateLimitOptions ?? {}),
+        schema: {
+          summary: 'Logout',
+          description: 'Clear auth cookie.',
+          tags: ['Auth'],
+          security: [{User: []}],
+          response: {
+            200: z.void(),
+          },
+        },
       },
       (_req, reply) => {
         clearAuthCookie(reply);
@@ -215,6 +270,22 @@ const authRoutes = async (fastify: FastifyInstance) => {
         '/users',
         {
           ...(authRateLimitOptions ?? {}),
+          schema: {
+            summary: 'List users',
+            description: 'List all users.',
+            tags: ['Auth'],
+            security: [{User: []}],
+            response: {
+              200: z.array(
+                z
+                  .object({
+                    username: z.string(),
+                    level: z.nativeEnum(AccessLevel),
+                  })
+                  .strict(),
+              ),
+            },
+          },
         },
         async (_req, reply): Promise<void> => {
           const users = await Users.listUsers();
@@ -232,7 +303,18 @@ const authRoutes = async (fastify: FastifyInstance) => {
         {
           ...(authRateLimitOptions ?? {}),
           schema: {
+            summary: 'Delete user',
+            description: 'Delete a user by username.',
+            tags: ['Auth'],
+            security: [{User: []}],
             params: usernameParamSchema,
+            response: {
+              200: z
+                .object({
+                  username: z.string(),
+                })
+                .strict(),
+            },
           },
         },
         async (req, reply): Promise<void> => {
@@ -245,11 +327,18 @@ const authRoutes = async (fastify: FastifyInstance) => {
         '/users/:username',
         {
           schema: {
+            summary: 'Update user',
+            description: 'Update a user by username.',
+            tags: ['Auth'],
+            security: [{User: []}],
             body: authUpdateUserSchema,
             params: usernameParamSchema,
+            response: {
+              200: z.object({}).strict(),
+            },
           },
         },
-        async (req, reply): Promise<void> => {
+        async (req) => {
           const {username} = req.params;
           const patch = req.body;
 
@@ -261,7 +350,7 @@ const authRoutes = async (fastify: FastifyInstance) => {
 
           bootstrapServicesForUser(user);
 
-          reply.status(200).send({});
+          return {};
         },
       );
     });
