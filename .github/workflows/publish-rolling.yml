@@ -22,80 +22,80 @@ jobs:
       package-name: '@jesec/flood'
       package-version: ${{ needs.version.outputs.build_version }}
 
-  npm-publish:
-    needs: package
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: actions/checkout@v4
+  # npm-publish:
+  #   needs: package
+  #   runs-on: ubuntu-24.04
+  #   permissions:
+  #     contents: read
+  #     id-token: write
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Download package artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: npm-package
-          path: artifacts
+  #     - name: Download package artifact
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: npm-package
+  #         path: artifacts
 
-      - name: Locate package tarball
-        id: package_tarball
-        run: echo "path=$(ls artifacts/*.tgz)" >> "$GITHUB_OUTPUT"
+  #     - name: Locate package tarball
+  #       id: package_tarball
+  #       run: echo "path=$(ls artifacts/*.tgz)" >> "$GITHUB_OUTPUT"
 
-      - name: Use Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          registry-url: 'https://registry.npmjs.org'
+  #     - name: Use Node.js 22
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: '22'
+  #         registry-url: 'https://registry.npmjs.org'
 
-      - name: Upgrade npm for OIDC support
-        run: npm install -g npm@latest
+  #     - name: Upgrade npm for OIDC support
+  #       run: npm install -g npm@latest
 
-      - name: Publish to npm with provenance
-        env:
-          NODE_AUTH_TOKEN: ''
-          npm_config_ignore_scripts: 'true'
-        run: npm publish --access public --provenance --tag master "./${{ steps.package_tarball.outputs.path }}"
+  #     - name: Publish to npm with provenance
+  #       env:
+  #         NODE_AUTH_TOKEN: ''
+  #         npm_config_ignore_scripts: 'true'
+  #       run: npm publish --access public --provenance --tag master "./${{ steps.package_tarball.outputs.path }}"
 
-  docker:
-    needs: package
-    uses: ./.github/workflows/build-docker.yml
-    permissions:
-      contents: read
-      packages: write
-    secrets: inherit
-    with:
-      push: true
-      platforms: linux/amd64,linux/arm64
-      flood-version: master
-      flood-tags: |
-        jesec/flood:master
-        ghcr.io/jesec/flood:master
-      build-rtorrent: true
-      rtorrent-version: master
-      rtorrent-tags: |
-        jesec/rtorrent-flood:master
-        ghcr.io/jesec/rtorrent-flood:master
+  # docker:
+  #   needs: package
+  #   uses: ./.github/workflows/build-docker.yml
+  #   permissions:
+  #     contents: read
+  #     packages: write
+  #   secrets: inherit
+  #   with:
+  #     push: true
+  #     platforms: linux/amd64,linux/arm64
+  #     flood-version: master
+  #     flood-tags: |
+  #       jesec/flood:master
+  #       ghcr.io/jesec/flood:master
+  #     build-rtorrent: true
+  #     rtorrent-version: master
+  #     rtorrent-tags: |
+  #       jesec/rtorrent-flood:master
+  #       ghcr.io/jesec/rtorrent-flood:master
 
   pkg:
     needs: package
     uses: ./.github/workflows/build-binary.yml
 
-  docker-distroless:
-    needs: pkg
-    uses: ./.github/workflows/build-docker-distroless.yml
-    permissions:
-      contents: read
-      packages: write
-    secrets: inherit
-    with:
-      push: true
-      platforms: linux/amd64,linux/arm64
-      flood-version: master
-      flood-tags: |
-        jesec/flood:master-distroless
-        ghcr.io/jesec/flood:master-distroless
-      build-rtorrent: true
-      rtorrent-version: master
-      rtorrent-tags: |
+  # docker-distroless:
+  #   needs: pkg
+  #   uses: ./.github/workflows/build-docker-distroless.yml
+  #   permissions:
+  #     contents: read
+  #     packages: write
+  #   secrets: inherit
+  #   with:
+  #     push: true
+  #     platforms: linux/amd64,linux/arm64
+  #     flood-version: master
+  #     flood-tags: |
+  #       jesec/flood:master-distroless
+  #       ghcr.io/jesec/flood:master-distroless
+  #     build-rtorrent: true
+  #     rtorrent-version: master
+  #     rtorrent-tags: |
         jesec/rtorrent-flood:master-distroless
         ghcr.io/jesec/rtorrent-flood:master-distroless
