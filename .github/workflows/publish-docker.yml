@@ -1,0 +1,41 @@
+name: Publish Docker Image
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  version:
+    runs-on: ubuntu-24.04
+    outputs:
+      build_version: ${{ steps.build.outputs.version }}
+    steps:
+      - name: Compute build version
+        id: build
+        run: echo "version=0.0.0-master.${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+  package:
+    needs: version
+    uses: ./.github/workflows/package.yml
+    with:
+      package-version: ${{ needs.version.outputs.build_version }}
+
+  docker:
+    needs: [version, package]
+    uses: ./.github/workflows/build-docker.yml
+    permissions:
+      contents: read
+      packages: write
+    secrets: inherit
+    with:
+      push: true
+      platforms: linux/arm64
+      flood-version: master
+      flood-repository: ghostxwheel/flood
+      flood-tags: |
+        ghostxwheel/flood:master
+        ghostxwheel/flood:latest
+      build-rtorrent: false
+      dockerhub-username: ghostxwheel
