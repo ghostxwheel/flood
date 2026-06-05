@@ -456,7 +456,7 @@ class QBittorrentClientGatewayService extends BaseClientGatewayService implement
                 seedsConnected: info.num_seeds,
                 seedsTotal: info.num_complete,
                 sizeBytes: info.size,
-                status: getTorrentStatusFromState(info.state, trackerMessage),
+                status: getTorrentStatusFromState(info.state),
                 tags: info.tags === '' ? [] : info.tags.split(',').map((tag) => tag.trim()),
                 trackerURIs,
                 upRate: info.upspeed,

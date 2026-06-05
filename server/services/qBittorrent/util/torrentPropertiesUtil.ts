@@ -25,10 +25,7 @@ export const getTorrentTrackerTypeFromURL = (url: string): TorrentTracker['type'
   return TorrentTrackerType.DHT;
 };
 
-export const getTorrentStatusFromState = (
-  state: QBittorrentTorrentState,
-  trackerMessage = '',
-): TorrentProperties['status'] => {
+export const getTorrentStatusFromState = (state: QBittorrentTorrentState): TorrentProperties['status'] => {
   const statuses: TorrentProperties['status'] = [];
 
   switch (state) {
@@ -94,10 +91,6 @@ export const getTorrentStatusFromState = (
       break;
     default:
       break;
-  }
-
-  if (trackerMessage.length > 0) {
-    statuses.push('warning');
   }
 
   return statuses;
