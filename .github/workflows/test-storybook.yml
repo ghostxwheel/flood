@@ -1,12 +1,7 @@
 name: Test Storybook
 
 on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
+  workflow_dispatch:
 
 jobs:
   test-storybook-matrix:

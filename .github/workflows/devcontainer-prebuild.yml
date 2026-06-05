@@ -1,20 +1,7 @@
 name: Prebuild Dev Container
 
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - '.devcontainer/**'
-      - '.github/workflows/devcontainer-prebuild.yml'
-  pull_request:
-    paths:
-      - '.devcontainer/**'
-      - '.github/workflows/devcontainer-prebuild.yml'
   workflow_dispatch:
-  schedule:
-    # Rebuild weekly on Sundays at 00:00 UTC to keep dependencies fresh
-    - cron: '0 0 * * 0'
 
 env:
   REGISTRY: ghcr.io

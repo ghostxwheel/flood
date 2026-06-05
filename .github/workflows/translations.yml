@@ -2,10 +2,6 @@ name: Sync translations
 
 on:
   workflow_dispatch:
-  push:
-    branches: [master]
-  schedule:
-    - cron: '0 */6 * * *'
 
 jobs:
   synchronize-with-crowdin:

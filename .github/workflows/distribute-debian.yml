@@ -2,10 +2,6 @@ name: Distribute for Debian
 
 on:
   workflow_dispatch:
-  workflow_run:
-    workflows: ['Release']
-    types:
-      - completed
 
 jobs:
   build:
