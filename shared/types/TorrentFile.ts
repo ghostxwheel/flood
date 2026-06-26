@@ -47,26 +47,3 @@ export interface LibTorrentResume {
   };
   'uncertain_pieces.timestamp'?: number; // timestamp
 }
-
-export interface RTorrentSession {
-  chunks_done: number;
-  chunks_wanted: number;
-  complete: 0 | 1;
-  directory: Buffer;
-  // 0: No hashing is happening.
-  // 1: The very first hash check is occurring.
-  // 2: The torrent is in the middle of hashing due to the finish event.
-  // 3: A rehash is occurring.
-  hashing: 0 | 1 | 2 | 3;
-  state: 0 | 1;
-  state_changed: number; // timestamp
-  state_counter: number;
-  tied_to_file: Buffer;
-  'timestamp.finished': number; // timestamp
-  'timestamp.started': number; // timestamp
-}
-
-export interface RTorrentFile extends TorrentFile {
-  libtorrent_resume?: LibTorrentResume;
-  rtorrent?: RTorrentSession;
-}

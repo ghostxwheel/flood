@@ -8,7 +8,6 @@
     "node",
     "webui",
     "web ui",
-    "rTorrent",
     "qBittorrent",
     "Transmission"
   ],
@@ -55,7 +54,6 @@
     "dev": "concurrently 'panda --watch' 'vite --config vite.config.ts' 'tsx watch server/bin/start.ts'",
     "start:development:client": "concurrently 'panda --watch' 'vite --config vite.config.ts'",
     "start:development:server": "NODE_ENV=development tsx watch server/bin/start.ts",
-    "start:test:rtorrent": "node scripts/testsetup.mjs",
     "test": "vitest run --coverage",
     "test:watch": "vitest --watch",
     "lint-staged": "lint-staged",

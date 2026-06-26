@@ -1,4 +1,3 @@
-import {spawn} from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -75,19 +74,6 @@ const {argv: argvObj} = yargs(process.argv.slice(2))
     describe: 'Password of Deluge RPC interface',
     type: 'string',
   })
-  .option('rthost', {
-    describe: "Host of rTorrent's SCGI interface",
-    type: 'string',
-  })
-  .option('rtport', {
-    describe: "Port of rTorrent's SCGI interface",
-    type: 'number',
-  })
-  .option('rtsocket', {
-    conflicts: ['rthost', 'rtport'],
-    describe: "Path to rTorrent's SCGI unix socket",
-    type: 'string',
-  })
   .option('qburl', {
     describe: 'URL to qBittorrent Web API',
     type: 'string',
@@ -126,9 +112,6 @@ const {argv: argvObj} = yargs(process.argv.slice(2))
       'deport',
       'deuser',
       'depass',
-      'rthost',
-      'rtport',
-      'rtsocket',
       'qburl',
       'qbuser',
       'qbpass',
@@ -197,18 +180,6 @@ const {argv: argvObj} = yargs(process.argv.slice(2))
     hidden: true,
     type: 'number',
   })
-  .option('rtorrent', {
-    default: false,
-    describe: 'ADVANCED: rTorrent daemon managed by Flood',
-    hidden: true,
-    type: 'boolean',
-  })
-  .option('rtconfig', {
-    describe: 'ADVANCED: rtorrent.rc for managed rTorrent daemon',
-    implies: 'rtorrent',
-    hidden: true,
-    type: 'string',
-  })
   .option('test', {
     default: false,
     describe: 'DEV ONLY: Test setup',
@@ -236,34 +207,6 @@ try {
   process.exit(1);
 }
 
-if (argv.rtorrent) {
-  const args = [];
-  let opts = 'system.daemon.set=true';
-
-  if (typeof argv.rtconfig === 'string' && argv.rtconfig.length > 0) {
-    args.push('-n');
-    opts += `,import=${argv.rtconfig}`;
-  }
-
-  const rTorrentProcess = spawn('rtorrent', args.concat(['-o', opts]), {stdio: 'inherit'});
-
-  fs.writeFileSync(path.join(argv.rundir, 'rtorrent.pid'), `${rTorrentProcess.pid}`);
-
-  if (!argv.test) {
-    rTorrentProcess.on('close', () => {
-      process.exit(1);
-    });
-    rTorrentProcess.on('error', () => {
-      process.exit(1);
-    });
-  }
-
-  process.on('exit', () => {
-    console.log('Killing rTorrent daemon...');
-    rTorrentProcess.kill('SIGHUP');
-  });
-}
-
 const DEFAULT_SECRET_PATH = path.join(argv.rundir, 'flood.secret');
 let secret: string;
 
@@ -286,24 +229,7 @@ if (!argv.secret) {
 }
 
 let connectionSettings: Partial<ClientConnectionSettings> | undefined;
-if (argv.rtsocket != null || argv.rthost != null) {
-  if (argv.rtsocket != null) {
-    connectionSettings = {
-      client: 'rTorrent',
-      type: 'socket',
-      version: 1,
-      socket: argv.rtsocket,
-    };
-  } else {
-    connectionSettings = {
-      client: 'rTorrent',
-      type: 'tcp',
-      version: 1,
-      host: argv.rthost,
-      port: argv.rtport,
-    };
-  }
-} else if (argv.qburl != null) {
+if (argv.qburl != null) {
   connectionSettings = {
     client: 'qBittorrent',
     type: 'web',

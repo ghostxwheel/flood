@@ -10,10 +10,9 @@ import type {ClientConnectionSettings} from '@shared/schema/ClientConnectionSett
 
 import DelugeConnectionSettingsForm from './DelugeConnectionSettingsForm';
 import QBittorrentConnectionSettingsForm from './QBittorrentConnectionSettingsForm';
-import RTorrentConnectionSettingsForm from './RTorrentConnectionSettingsForm';
 import TransmissionConnectionSettingsForm from './TransmissionConnectionSettingsForm';
 
-const DEFAULT_SELECTION: ClientConnectionSettings['client'] = 'rTorrent' as const;
+const DEFAULT_SELECTION: ClientConnectionSettings['client'] = 'qBittorrent' as const;
 
 interface ClientConnectionSettingsFormProps {
   onSettingsChange: (settings: ClientConnectionSettings | null) => void;
@@ -38,9 +37,6 @@ const ClientConnectionSettingsForm: FC<ClientConnectionSettingsFormProps> = ({
       break;
     case 'qBittorrent':
       settingsForm = <QBittorrentConnectionSettingsForm onSettingsChange={onSettingsChange} />;
-      break;
-    case 'rTorrent':
-      settingsForm = <RTorrentConnectionSettingsForm onSettingsChange={onSettingsChange} />;
       break;
     case 'Transmission':
       settingsForm = <TransmissionConnectionSettingsForm onSettingsChange={onSettingsChange} />;

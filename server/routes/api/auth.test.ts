@@ -18,10 +18,12 @@ import constructRoutes from '..';
 vi.useRealTimers();
 
 const testConnectionSettings: ClientConnectionSettings = {
-  client: 'rTorrent',
-  type: 'socket',
+  client: 'qBittorrent',
+  type: 'web',
   version: 1,
-  socket: '/home/download/rtorrent.sock',
+  url: 'http://localhost:8080',
+  username: 'admin',
+  password: 'adminadmin',
 };
 
 const testAdminUser = {
@@ -351,10 +353,12 @@ describe('GET /api/auth/users', () => {
 describe('PATCH /api/auth/users/{username}', () => {
   const patch: AuthUpdateUserOptions = {
     client: {
-      client: 'rTorrent',
-      type: 'socket',
+      client: 'qBittorrent',
+      type: 'web',
       version: 1,
-      socket: 'test',
+      url: 'http://localhost:8080',
+      username: 'admin',
+      password: 'adminadmin',
     },
   };
 

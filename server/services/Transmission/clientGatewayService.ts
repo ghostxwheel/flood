@@ -559,6 +559,11 @@ class TransmissionClientGatewayService extends BaseClientGatewayService implemen
       .updateSessionID()
       .then(() => this.processClientRequestSuccess(undefined), this.processClientRequestError);
   }
+
+  async destroy(drop: boolean): Promise<void> {
+    this.clientRequestManager.destroy();
+    return super.destroy(drop);
+  }
 }
 
 export default TransmissionClientGatewayService;

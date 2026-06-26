@@ -24,32 +24,6 @@ const qBittorrentConnectionSettingsSchema = strictObject({
 
 export type QBittorrentConnectionSettings = zodInfer<typeof qBittorrentConnectionSettingsSchema>;
 
-const rTorrentTCPConnectionSettingsSchema = strictObject({
-  client: literal('rTorrent'),
-  type: literal('tcp'),
-  version: literal(1),
-  host: string(),
-  port: number(),
-});
-
-export type RTorrentTCPConnectionSettings = zodInfer<typeof rTorrentTCPConnectionSettingsSchema>;
-
-const rTorrentSocketConnectionSettingsSchema = strictObject({
-  client: literal('rTorrent'),
-  type: literal('socket'),
-  version: literal(1),
-  socket: string(),
-});
-
-export type RTorrentSocketConnectionSettings = zodInfer<typeof rTorrentSocketConnectionSettingsSchema>;
-
-const rTorrentConnectionSettingsSchema = union([
-  rTorrentTCPConnectionSettingsSchema,
-  rTorrentSocketConnectionSettingsSchema,
-]);
-
-export type RTorrentConnectionSettings = zodInfer<typeof rTorrentConnectionSettingsSchema>;
-
 const transmissionConnectionSettingsSchema = strictObject({
   client: literal('Transmission'),
   type: literal('rpc'),
@@ -75,7 +49,6 @@ export const clientConnectionSettingsSchema = union([
   delugeConnectionSettingsSchema,
   neptuneConnectionSettingsSchema,
   qBittorrentConnectionSettingsSchema,
-  rTorrentConnectionSettingsSchema,
   transmissionConnectionSettingsSchema,
 ]);
 

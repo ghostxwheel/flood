@@ -2,10 +2,6 @@
 #
 # For development and debugging only. Use Dockerfile.release for production.
 #
-# This image bundles rTorrent for easier debugging. It is not started by default.
-# Use --rtorrent argument if you wish to start the bundled rTorrent.
-# For production, use rtorrent-flood instead.
-#
 # This Dockerfile uses contents of current folder which might contain
 # secrets, uncommitted changes or other sensitive information. DO NOT
 # publish the result image unless it was composed in a clean environment.
@@ -55,12 +51,3 @@ ENTRYPOINT ["npm", "--prefix=/usr/src/app/", "run", "start", "--", "--host=::"]
 
 # Then, to start a debugging session of frontend:
 # docker exec -it ${container_id} npm --prefix=/usr/src/app/ run start:development:client
-
-# rtorrent-flood image
-FROM docker.io/jesec/rtorrent:master AS rtorrent
-FROM flood AS rtorrent-flood
-
-# Copy rTorrent
-COPY --from=rtorrent / /
-
-ENTRYPOINT ["npm", "--prefix=/usr/src/app/", "run", "start", "--", "--host=::", "--rtorrent"]

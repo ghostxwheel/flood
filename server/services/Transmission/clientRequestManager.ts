@@ -28,6 +28,7 @@ class ClientRequestManager {
   private rpcURL: string;
   private authHeader: string;
   private sessionID?: Promise<string | undefined>;
+  private sessionRefreshTimer!: NodeJS.Timeout;
 
   async fetchSessionID(url = this.rpcURL, authHeader = this.authHeader): Promise<string | undefined> {
     let id: string | undefined = undefined;
@@ -306,9 +307,13 @@ class ClientRequestManager {
     this.authHeader = `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`;
 
     this.updateSessionID().catch(() => undefined);
-    setInterval(() => {
+    this.sessionRefreshTimer = setInterval(() => {
       this.updateSessionID().catch(() => undefined);
     }, 1000 * 60 * 60 * 8);
+  }
+
+  destroy(): void {
+    clearInterval(this.sessionRefreshTimer);
   }
 }
 

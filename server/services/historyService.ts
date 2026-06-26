@@ -13,6 +13,7 @@ type HistoryServiceEvents = {
 class HistoryService extends BaseService<HistoryServiceEvents> {
   private errorCount = 0;
   private pollTimeout?: NodeJS.Timeout;
+  private pollInterval = config.torrentClientPollIntervalIdle;
 
   private transferSummary: TransferSummary = {
     downRate: 0,
@@ -32,6 +33,21 @@ class HistoryService extends BaseService<HistoryServiceEvents> {
 
     this.onServicesUpdated = () => {
       this.fetchCurrentTransferSummary();
+
+      // Match TorrentService's idle/active pattern: poll fast only when a client is streaming
+      this.on('newListener', (event) => {
+        if (event === 'TRANSFER_SUMMARY_FULL_UPDATE') {
+          if (this.pollInterval !== config.torrentClientPollInterval) {
+            this.pollInterval = config.torrentClientPollInterval;
+          }
+        }
+      });
+
+      this.on('removeListener', (event) => {
+        if (event === 'TRANSFER_SUMMARY_FULL_UPDATE' && this.listenerCount('TRANSFER_SUMMARY_FULL_UPDATE') === 0) {
+          this.pollInterval = config.torrentClientPollIntervalIdle;
+        }
+      });
     };
   }
 
@@ -46,7 +62,7 @@ class HistoryService extends BaseService<HistoryServiceEvents> {
       .catch(this.handleFetchTransferSummaryError);
   };
 
-  private deferFetchTransferSummary(interval = config.torrentClientPollInterval) {
+  private deferFetchTransferSummary(interval = this.pollInterval) {
     this.pollTimeout = setTimeout(this.fetchCurrentTransferSummary, interval);
   }
 
@@ -70,7 +86,7 @@ class HistoryService extends BaseService<HistoryServiceEvents> {
   };
 
   private handleFetchTransferSummaryError = () => {
-    let nextInterval = config.torrentClientPollInterval;
+    let nextInterval = this.pollInterval;
 
     // If more than 2 consecutive errors have occurred, then we delay the next request.
     this.errorCount += 1;
@@ -87,6 +103,8 @@ class HistoryService extends BaseService<HistoryServiceEvents> {
     if (this.pollTimeout != null) {
       clearTimeout(this.pollTimeout);
     }
+
+    this.snapshot.destroy();
 
     if (drop) {
       await this.snapshot.dropDB();

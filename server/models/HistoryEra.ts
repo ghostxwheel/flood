@@ -17,6 +17,7 @@ class HistoryEra {
   private lastUpdate = 0;
   private opts: HistoryEraOpts;
   private db: Datastore;
+  private cleanupTimer: NodeJS.Timeout;
 
   constructor(opts: HistoryEraOpts) {
     this.opts = opts;
@@ -28,7 +29,11 @@ class HistoryEra {
       cleanupInterval = config.dbCleanInterval;
     }
 
-    setInterval(this.removeOutdatedData, cleanupInterval);
+    this.cleanupTimer = setInterval(this.removeOutdatedData, cleanupInterval);
+  }
+
+  destroy(): void {
+    clearInterval(this.cleanupTimer);
   }
 
   private removeOutdatedData = (): Promise<void> => {

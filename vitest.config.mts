@@ -48,16 +48,6 @@ export default defineConfig({
         plugins: [tsconfigPathsPlugin],
         test: {
           ...baseTestConfig,
-          name: 'rtorrent',
-          setupFiles: ['server/.jest/rtorrent.setup.js'],
-          include: ['server/**/*.test.ts'],
-          exclude: ['server/routes/api/auth.test.ts'],
-        },
-      }),
-      defineProject({
-        plugins: [tsconfigPathsPlugin],
-        test: {
-          ...baseTestConfig,
           name: 'transmission',
           setupFiles: ['server/.jest/transmission.setup.js'],
           include: ['server/**/*.test.ts'],

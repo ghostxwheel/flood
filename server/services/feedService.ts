@@ -93,6 +93,9 @@ class FeedService extends BaseService<Record<string, never>> {
   }
 
   async destroy(drop: boolean) {
+    this.feedReaders.forEach((r) => r.stopReader());
+    this.feedReaders = [];
+
     if (drop) {
       await this.db.dropDatabaseAsync();
     }
