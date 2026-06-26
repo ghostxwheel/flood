@@ -38,5 +38,4 @@ jobs:
       flood-tags: |
         ghostxwheel/flood:master
         ghostxwheel/flood:latest
-      build-rtorrent: false
       dockerhub-username: ghostxwheel
