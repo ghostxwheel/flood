@@ -3,7 +3,7 @@ import type {FastifyReply, FastifyRequest} from 'fastify';
 import type {EventMap} from 'typed-emitter';
 import type TypedEmitter from 'typed-emitter';
 
-import type {TransferHistory} from '../../shared/types/TransferData';
+import type {TransferHistory, TransferSummary} from '../../shared/types/TransferData';
 import type {DiskUsageSummary} from '../models/DiskUsage';
 import DiskUsage from '../models/DiskUsage';
 import ServerEvent from '../models/ServerEvent';
@@ -99,9 +99,13 @@ export default async (req: FastifyRequest, reply: FastifyReply) => {
   // Transfer summary
   const transferSummary = serviceInstances.historyService.getTransferSummary();
   serverEvent.emit(transferSummary.id, 'TRANSFER_SUMMARY_FULL_UPDATE', transferSummary.transferSummary);
-  handleEvents(serviceInstances.historyService, 'TRANSFER_SUMMARY_FULL_UPDATE', ({id, summary}) => {
-    serverEvent.emit(id, 'TRANSFER_SUMMARY_FULL_UPDATE', summary);
-  });
+  handleEvents(
+    serviceInstances.historyService,
+    'TRANSFER_SUMMARY_FULL_UPDATE',
+    ({id, summary}: {id: number; summary: TransferSummary}) => {
+      serverEvent.emit(id, 'TRANSFER_SUMMARY_FULL_UPDATE', summary);
+    },
+  );
 
   // Notifications
   serverEvent.emit(

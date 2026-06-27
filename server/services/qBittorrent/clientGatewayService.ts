@@ -416,61 +416,66 @@ class QBittorrentClientGatewayService extends BaseClientGatewayService implement
           }
         }
 
-        const torrentList: TorrentList = Object.assign(
-          {},
-          ...(await Promise.all(
-            infos.map(async (info) => {
-              const {
-                comment = '',
-                dateCreated = 0,
-                isPrivate = false,
-                trackerMessage = '',
-                trackerURIs = [],
-              } = this.cachedProperties[info.hash] || {};
+        // Prune cached properties for torrents that no longer exist so the map stays bounded
+        // to the current torrent count (otherwise removed torrents leak entries indefinitely).
+        const liveHashes = new Set(infos.map((info) => info.hash));
+        for (const hash of Object.keys(this.cachedProperties)) {
+          if (!liveHashes.has(hash)) {
+            delete this.cachedProperties[hash];
+          }
+        }
 
-              const isSeeding = info.state.endsWith('UP');
-              const torrentProperties: TorrentProperties = {
-                bytesDone: info.completed,
-                comment: comment,
-                dateActive: info.dlspeed > 0 || info.upspeed > 0 ? -1 : info.last_activity,
-                dateAdded: info.added_on,
-                dateCreated,
-                dateFinished: info.completion_on,
-                directory: info.save_path,
-                downRate: info.dlspeed,
-                downTotal: info.downloaded,
-                // Seeding states have ETA until seeding goal (ratio/time); show it when valid.
-                // For non-seeding states, hide ETA when dlspeed is 0 to avoid showing stale values.
-                eta: info.eta >= 8640000 || (!isSeeding && info.dlspeed === 0) ? -1 : info.eta,
-                hash: info.hash.toUpperCase(),
-                isPrivate,
-                isInitialSeeding: info.super_seeding,
-                isSequential: info.seq_dl,
-                message: trackerMessage,
-                name: info.name,
-                peersConnected: info.num_leechs,
-                peersTotal: info.num_incomplete,
-                percentComplete: info.progress * 100,
-                priority: 1,
-                ratio: info.ratio,
-                seedsConnected: info.num_seeds,
-                seedsTotal: info.num_complete,
-                sizeBytes: info.size,
-                status: getTorrentStatusFromState(info.state),
-                tags: info.tags === '' ? [] : info.tags.split(',').map((tag) => tag.trim()),
-                trackerURIs,
-                upRate: info.upspeed,
-                upTotal: info.uploaded,
-              };
+        // Build the torrent map in a single synchronous pass. Avoids allocating a throwaway
+        // Promise and single-key object per torrent on every (2 s) poll, reducing GC churn.
+        const torrentList: TorrentList = {};
+        for (const info of infos) {
+          const {
+            comment = '',
+            dateCreated = 0,
+            isPrivate = false,
+            trackerMessage = '',
+            trackerURIs = [],
+          } = this.cachedProperties[info.hash] || {};
 
-              this.emit('PROCESS_TORRENT', torrentProperties);
+          const isSeeding = info.state.endsWith('UP');
+          const torrentProperties: TorrentProperties = {
+            bytesDone: info.completed,
+            comment: comment,
+            dateActive: info.dlspeed > 0 || info.upspeed > 0 ? -1 : info.last_activity,
+            dateAdded: info.added_on,
+            dateCreated,
+            dateFinished: info.completion_on,
+            directory: info.save_path,
+            downRate: info.dlspeed,
+            downTotal: info.downloaded,
+            // Seeding states have ETA until seeding goal (ratio/time); show it when valid.
+            // For non-seeding states, hide ETA when dlspeed is 0 to avoid showing stale values.
+            eta: info.eta >= 8640000 || (!isSeeding && info.dlspeed === 0) ? -1 : info.eta,
+            hash: info.hash.toUpperCase(),
+            isPrivate,
+            isInitialSeeding: info.super_seeding,
+            isSequential: info.seq_dl,
+            message: trackerMessage,
+            name: info.name,
+            peersConnected: info.num_leechs,
+            peersTotal: info.num_incomplete,
+            percentComplete: info.progress * 100,
+            priority: 1,
+            ratio: info.ratio,
+            seedsConnected: info.num_seeds,
+            seedsTotal: info.num_complete,
+            sizeBytes: info.size,
+            status: getTorrentStatusFromState(info.state),
+            tags: info.tags === '' ? [] : info.tags.split(',').map((tag) => tag.trim()),
+            trackerURIs,
+            upRate: info.upspeed,
+            upTotal: info.uploaded,
+          };
 
-              return {
-                [torrentProperties.hash]: torrentProperties,
-              };
-            }),
-          )),
-        );
+          this.emit('PROCESS_TORRENT', torrentProperties);
+
+          torrentList[torrentProperties.hash] = torrentProperties;
+        }
 
         const torrentListSummary = {
           id: Date.now(),

@@ -8,6 +8,8 @@ type HistoryServiceEvents = {
   TRANSFER_SUMMARY_FULL_UPDATE: (payload: {id: number; summary: TransferSummary}) => void;
   FETCH_TRANSFER_SUMMARY_SUCCESS: () => void;
   FETCH_TRANSFER_SUMMARY_ERROR: () => void;
+  newListener: (event: keyof Omit<HistoryServiceEvents, 'newListener' | 'removeListener'>) => void;
+  removeListener: (event: keyof Omit<HistoryServiceEvents, 'newListener' | 'removeListener'>) => void;
 };
 
 class HistoryService extends BaseService<HistoryServiceEvents> {
@@ -39,6 +41,13 @@ class HistoryService extends BaseService<HistoryServiceEvents> {
         if (event === 'TRANSFER_SUMMARY_FULL_UPDATE') {
           if (this.pollInterval !== config.torrentClientPollInterval) {
             this.pollInterval = config.torrentClientPollInterval;
+            // Reschedule immediately so the transfer-rate graph resumes at the fast cadence.
+            // Otherwise the next poll stays on the pending idle timer (up to 15 min away),
+            // which makes the graph appear frozen after the UI connects.
+            if (this.pollTimeout != null) {
+              clearTimeout(this.pollTimeout);
+            }
+            this.deferFetchTransferSummary();
           }
         }
       });

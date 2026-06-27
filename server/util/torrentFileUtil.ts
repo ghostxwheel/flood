@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import bencode from 'bencode';
 
-import type {LibTorrentResume, RTorrentFile, TorrentFile} from '../../shared/types/TorrentFile';
+import type {LibTorrentResume, TorrentFile} from '../../shared/types/TorrentFile';
 import {LibTorrentFilePriority} from '../../shared/types/TorrentFile';
 
 const openAndDecodeTorrent = async (torrentPath: string): Promise<TorrentFile | null> => {
@@ -151,7 +151,7 @@ export const setCompleted = async (torrent: Buffer, destination: string, isBaseP
     files: completedFileResumeTree,
   };
 
-  const torrentDataWithResume: RTorrentFile = Object.assign(torrentData, {
+  const torrentDataWithResume: TorrentFile & {libtorrent_resume: LibTorrentResume} = Object.assign(torrentData, {
     libtorrent_resume: completedResume,
   });
 
